@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "658759085303",
+    "project_id": "petassist-76989",
+    "storage_bucket": "petassist-76989.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:658759085303:android:fe6f08a78866a16fb877f2",
+        "android_client_info": {
+          "package_name": "com.example.petassist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuu2DLXOey5PIUgbhVmAKWHwUlIywRUXo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:658759085303:android:0f8c5be2a6b29abfb877f2",
+        "android_client_info": {
+          "package_name": "com.example.subir_archivos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuu2DLXOey5PIUgbhVmAKWHwUlIywRUXo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
