@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  //String? cachedProfileImageUrl;
 
   Stream<User?> get user => _auth.authStateChanges();
 
@@ -51,53 +52,73 @@ class AuthService {
     String usernameOrEmail,
     String password,
   ) async {
+    print("=== Inicio de login ===");
+    print("Username o email recibido: $usernameOrEmail");
+    print(
+      "Password recibido: ${'*' * password.length}",
+    ); // evita mostrarlo completo
+
     try {
-      // Primero intenta hacer login directamente (asumiendo que usernameOrEmail podría ser un email)
+      // Intento 1: Asumimos que es un email
+      print("Intentando login directo con FirebaseAuth...");
+
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: usernameOrEmail,
         password: password,
       );
 
+      print("Login con email exitoso. UID: ${result.user!.uid}");
+
       // Verificar si es admin
-      final isAdmin =
+      final isAdminDoc =
           await _firestore
               .collection('admin_roles')
               .doc(result.user!.uid)
               .get();
+      print("¿Es admin?: ${isAdminDoc.exists}");
 
       // Obtener datos del usuario
       final userDoc =
           await _firestore.collection('users').doc(result.user!.uid).get();
+      print("Tipo de usuario: ${userDoc['tipoUsuario']}");
 
-      if (isAdmin.exists) {
-        // Es admin, redirigirá al AdminPanel automáticamente
+      if (isAdminDoc.exists) {
+        print("Usuario es administrador. Acceso permitido.");
         return result.user;
       }
 
-      // Lógica existente para veterinarios...
       if (userDoc['tipoUsuario'] == 'Veterinario') {
+        print("Estado del veterinario: ${userDoc['estado']}");
         switch (userDoc['estado']) {
           case 'pendiente':
             await _auth.signOut();
+            print("Cuenta pendiente de aprobación. Se cerró sesión.");
             throw FirebaseAuthException(
               code: 'pending-approval',
               message: 'Cuenta pendiente de aprobación',
             );
           case 'rechazado':
             await _auth.signOut();
+            print("Cuenta rechazada. Se cerró sesión.");
             throw FirebaseAuthException(
               code: 'account-rejected',
               message: 'Cuenta rechazada',
             );
           case 'aceptado':
-            break; // Permite el login
+            print("Veterinario aprobado. Acceso permitido.");
+            break;
         }
       }
 
       return result.user;
     } on FirebaseAuthException catch (e) {
+      print("Error en login directo: ${e.code} - ${e.message}");
+
       if (e.code == 'user-not-found' || e.code == 'invalid-email') {
-        // Si falla, intenta buscar el email asociado al username
+        print(
+          "Intentando buscar el email asociado al username '$usernameOrEmail'...",
+        );
+
         final query =
             await _firestore
                 .collection('users')
@@ -106,6 +127,7 @@ class AuthService {
                 .get();
 
         if (query.docs.isEmpty) {
+          print("Username no encontrado en base de datos.");
           throw FirebaseAuthException(
             code: 'user-not-found',
             message: 'Usuario no encontrado',
@@ -113,12 +135,20 @@ class AuthService {
         }
 
         final email = query.docs.first['email'];
+        print("Email encontrado para username '$usernameOrEmail': $email");
+
+        // Segundo intento de login con email encontrado
         UserCredential result = await _auth.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
+        print(
+          "Login exitoso con email derivado del username. UID: ${result.user!.uid}",
+        );
         return result.user;
       }
+
+      print("Error no manejado: ${e.code} - ${e.message}");
       rethrow;
     }
   }
@@ -177,5 +207,17 @@ class AuthService {
 
   Future<DocumentSnapshot> getUserDoc(String uid) async {
     return await _firestore.collection('users').doc(uid).get();
+  }
+
+  // En tu archivo auth_service.dart, añade este método:
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      print(
+        "Error al enviar email de restablecimiento: ${e.code} - ${e.message}",
+      );
+      rethrow; // Esto permite manejar el error en la UI
+    }
   }
 }

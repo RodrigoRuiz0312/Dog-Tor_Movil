@@ -1,7 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Permisos para cámara y almacenamiento -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+    <!-- Para Android 10+ (API 29+) necesitas este permiso en lugar de los anteriores -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    
+    <!-- Para usar la cámara -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
+
     <application
         android:enableOnBackInvokedCallback="true"
-        android:label="Pet Assist"
+        android:label="Dog-Tor"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

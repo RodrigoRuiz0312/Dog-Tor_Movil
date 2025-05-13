@@ -20,6 +20,11 @@ dependencies:
   firebase_storage: ^12.4.5
   permission_handler: ^12.0.0+1
   cached_network_image: ^3.4.1
+  awesome_dialog: ^3.2.1
+  lottie: ^3.3.1
+  particles_flutter: ^1.0.1
+  shared_preferences: ^2.5.3
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:
@@ -41,6 +46,13 @@ flutter:
   assets:
     - assets/pluto.png
     - assets/fondoLogin.png
+    - assets/animaciones/loading_animation.json
+    - assets/animaciones/loading_animation_2.json
+    - assets/fondoCards.jpg
+    - assets/icons/playstore-icon.png
+    - assets/noPets.png
+    - assets/animaciones/loading_animation_3.json
+    - assets/huellaParticles.png
 
   fonts:
     - family: Short

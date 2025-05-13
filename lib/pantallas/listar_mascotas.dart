@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/appbar_diseño.dart';
 
 class ListaMascotasScreen extends StatefulWidget {
   final User user;
@@ -104,7 +105,7 @@ class _ListaMascotasScreenState extends State<ListaMascotasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis Mascotas')),
+      appBar: buildCustomAppBar(context, 'Mis Mascotas'),
       body: StreamBuilder<QuerySnapshot>(
         stream:
             _firestore
@@ -118,7 +119,35 @@ class _ListaMascotasScreenState extends State<ListaMascotasScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No tienes mascotas registradas.'));
+            return Center(
+              child: Card(
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                color: Colors.grey[100],
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.pets, size: 60, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'No tienes mascotas registradas.',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
           }
 
           final mascotas = snapshot.data!.docs;

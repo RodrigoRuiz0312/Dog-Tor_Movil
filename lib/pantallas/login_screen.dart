@@ -6,6 +6,8 @@ import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'registro_screen.dart';
 import '../main.dart';
+import 'reestablecer_contraseña_screen.dart';
+import '../widgets/loading.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -82,54 +84,79 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   // Botón para iniciar sesión
-                  _isLoading
-                      ? CircularProgressIndicator()
-                      : AuthButton(
-                        text: 'Entrar',
-                        onPressed: () async {
-                          print("Botón 'Entrar' presionado");
+                  AuthButton(
+                    text: 'Entrar',
+                    onPressed:
+                        _isLoading
+                            ? null
+                            : () async {
+                              print("Botón 'Entrar' presionado");
 
-                          if (_formKey.currentState?.validate() ?? false) {
-                            setState(() => _isLoading = true);
+                              if (_formKey.currentState?.validate() ?? false) {
+                                setState(() => _isLoading = true);
 
-                            final authService = Provider.of<AuthService>(
-                              context,
-                              listen: false,
-                            );
-
-                            try {
-                              final user = await authService
-                                  .signInWithUsernameAndPassword(
-                                    _usernameController.text,
-                                    _passwordController.text,
-                                  );
-
-                              if (user != null) {
-                                // Elimina la navegación manual y deja que AuthWrapper maneje la redirección
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AuthWrapper(),
-                                  ),
+                                final loadingDialog = showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => LottieLoadingDialog(),
                                 );
-                                print("Login exitoso");
-                              } else {
-                                setState(() {
-                                  _error =
-                                      'Error en las credenciales. Intenta de nuevo.';
-                                  _isLoading = false;
-                                });
+
+                                final authService = Provider.of<AuthService>(
+                                  context,
+                                  listen: false,
+                                );
+
+                                try {
+                                  final user = await authService
+                                      .signInWithUsernameAndPassword(
+                                        _usernameController.text,
+                                        _passwordController.text,
+                                      );
+
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).pop(); // Cierra el dialog de Lottie
+
+                                  if (user != null) {
+                                    // Elimina la navegación manual y deja que AuthWrapper maneje la redirección
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AuthWrapper(),
+                                      ),
+                                    );
+                                    print("Login exitoso");
+                                  } else {
+                                    setState(() {
+                                      _error =
+                                          'Error en las credenciales. Intenta de nuevo.';
+                                      _isLoading = false;
+                                    });
+                                  }
+                                } catch (e) {
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).pop();
+
+                                  setState(() {
+                                    _error =
+                                        'Error al iniciar sesión: ${e.toString()}';
+                                    _isLoading = false;
+                                  });
+
+                                  // Mostrar error al usuario
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(_error),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
-                            } catch (e) {
-                              setState(() {
-                                _error =
-                                    'Error al iniciar sesión: ${e.toString()}';
-                                _isLoading = false;
-                              });
-                            }
-                          }
-                        },
-                      ),
+                            },
+                  ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -170,7 +197,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ReestablecerContrasenaScreen(),
+                            ),
+                          );
+                        },
                         child: const Text(
                           '¿Olvidaste tu contraseña?',
                           style: TextStyle(

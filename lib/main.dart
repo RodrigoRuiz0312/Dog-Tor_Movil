@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:login/pantallas/inicio_cliente.dart';
+import 'package:login/services/image_service.dart';
 import '../pantallas/login_screen.dart';
 import 'services/auth_service.dart';
 import 'package:provider/provider.dart';
@@ -10,10 +11,25 @@ import 'pantallas/inicio_vet.dart';
 import 'pantallas/cuenta_pendiente.dart';
 import 'pantallas/cuenta_rechazada.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import '../widgets/loading.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyA4NBMrpHWjuV1LiIJFLcCAO9cUAo6tr2w",
+        authDomain: "petassist-76989.firebaseapp.com",
+        projectId: "petassist-76989",
+        storageBucket: "petassist-76989.firebasestorage.app",
+        messagingSenderId: "658759085303",
+        appId: "1:658759085303:web:997598cbef2ee1d6b877f2",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
   runApp(const MyApp());
 }
 
@@ -23,14 +39,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [Provider<AuthService>(create: (_) => AuthService())],
+      providers: [
+        Provider<AuthService>(create: (_) => AuthService()),
+        Provider<ImageService>(create: (_) => ImageService()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: AuthWrapper(),
         routes: {
           '/admin': (context) => AdminPanel(),
-          '/cliente': (context) => InicioCliente(user: FirebaseAuth.instance.currentUser!),
-          '/veterinario': (context) => InicioVeterinario(user: FirebaseAuth.instance.currentUser!),
+          '/cliente':
+              (context) =>
+                  InicioCliente(user: FirebaseAuth.instance.currentUser!),
+          '/veterinario':
+              (context) =>
+                  InicioVeterinario(user: FirebaseAuth.instance.currentUser!),
         },
       ),
     );
@@ -52,46 +75,61 @@ class AuthWrapper extends StatelessWidget {
           if (user == null) {
             return LoginScreen();
           }
-          return FutureBuilder<bool>(
-            future: _auth.isAdmin(user.uid),
-            builder: (context, adminSnapshot) {
-              if (adminSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
-              }
-              
-              // Verificar el tipo de usuario
-              return FutureBuilder<DocumentSnapshot>(
-                future: _auth.getUserDoc(user.uid),
-                builder: (context, userDocSnapshot) {
-                  if (userDocSnapshot.connectionState == ConnectionState.waiting) {
-                    return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                  }
-                  
-                  final userData = userDocSnapshot.data?.data() as Map<String, dynamic>?;
-                  final tipoUsuario = userData?['tipoUsuario'] ?? 'Cliente';
-                  final estado = userData?['estado'] ?? '';
 
-                  // Lógica de redirección
-                  if (adminSnapshot.data == true) {
-                    return AdminPanel(); // Pantalla de admin
-                  } else if (tipoUsuario == 'Veterinario') {
-                    if (estado == 'aceptado') {
-                      return InicioVeterinario(user: user);
-                    } else if (estado == 'pendiente') {
-                      return CuentaPendienteScreen();
-                    } else {
-                      return CuentaRechazadaScreen();
-                    }
-                  } else {
-                    return InicioCliente(user: user); // Pantalla normal para clientes
-                  }
-                },
-              );
+          // Usamos FutureBuilder para manejar todas las verificaciones juntas
+          return FutureBuilder<Map<String, dynamic>>(
+            future: _getUserAuthData(user.uid),
+            builder: (context, authDataSnapshot) {
+              if (authDataSnapshot.connectionState == ConnectionState.waiting) {
+                return _buildLoadingScreen();
+              }
+
+              final authData = authDataSnapshot.data;
+              if (authData == null) {
+                return LoginScreen(); // O algún manejo de error
+              }
+
+              // Lógica de redirección simplificada
+              if (authData['isAdmin'] == true) {
+                return AdminPanel();
+              } else if (authData['tipoUsuario'] == 'Veterinario') {
+                switch (authData['estado']) {
+                  case 'aceptado':
+                    return InicioVeterinario(user: user);
+                  case 'pendiente':
+                    return CuentaPendienteScreen();
+                  default:
+                    return CuentaRechazadaScreen();
+                }
+              } else {
+                return InicioCliente(user: user);
+              }
             },
           );
         }
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return _buildLoadingScreen();
       },
+    );
+  }
+
+  Future<Map<String, dynamic>> _getUserAuthData(String uid) async {
+    final isAdmin = await _auth.isAdmin(uid);
+    final userDoc = await _auth.getUserDoc(uid);
+    final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+
+    return {
+      'isAdmin': isAdmin,
+      'tipoUsuario': userData['tipoUsuario'] ?? 'Cliente',
+      'estado': userData['estado'] ?? '',
+    };
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      body: Center(
+        child:
+            LottieLoadingDialog(), // Reemplaza con tu widget Lottie personalizado
+      ),
     );
   }
 }
@@ -205,12 +243,13 @@ class AuthTextField extends StatelessWidget {
       onTap: onTap,
       decoration: InputDecoration(
         prefixIcon: Icon(prefixIcon, color: Colors.white),
-        suffixIcon: suffixIcon != null 
-            ? IconButton(
-                icon: Icon(suffixIcon, color: Colors.white),
-                onPressed: onSuffixIconTap,
-              )
-            : null,
+        suffixIcon:
+            suffixIcon != null
+                ? IconButton(
+                  icon: Icon(suffixIcon, color: Colors.white),
+                  onPressed: onSuffixIconTap,
+                )
+                : null,
         hintText: hintText,
         filled: true,
         fillColor: const Color.fromARGB(183, 146, 203, 150).withOpacity(0.3),
@@ -277,12 +316,12 @@ class AuthHeader extends StatelessWidget {
         // Texto "Dog-Tor" (subtítulo) - Ahora en la parte superior
         Positioned(
           top:
-              50, // Ajusta este valor para posicionarlo exactamente donde quieras
+              40, // Ajusta este valor para posicionarlo exactamente donde quieras
           left: 0,
           right: 0,
           child: Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
               child: AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 300),
                 style: const TextStyle(
@@ -324,9 +363,9 @@ class AuthHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 64),
+            const SizedBox(height: 58),
             // Imagen
-            Image.asset(imagePath, width: 185, height: 185),
+            Image.asset(imagePath, width: 160, height: 160),
           ],
         ),
       ],

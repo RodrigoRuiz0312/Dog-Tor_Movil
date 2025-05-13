@@ -19,7 +19,7 @@ class CuentaRechazadaScreen extends StatelessWidget {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'Lo sentimos, tu cuenta de veterinario ha sido rechazada. Por favor, contacta al administrador para más información.',
+                'Lo sentimos, tu solicitud para realizar tu cuenta de veterinario ha sido rechazada. Por favor, contacta al administrador para más información.',
                 textAlign: TextAlign.center,
               ),
             ),

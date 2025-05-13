@@ -139,7 +139,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         children: [
           const BackgroundImage(imagePath: 'assets/fondoLogin.png'),
           AuthFormContainer(
-            heightPercentage: 0.70,
+            heightPercentage: 0.80,
             child: Form(
               key: _formKey,
               child: Column(
