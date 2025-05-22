@@ -113,13 +113,12 @@ class AuthWrapper extends StatelessWidget {
   }
 
   Future<Map<String, dynamic>> _getUserAuthData(String uid) async {
-    final isAdmin = await _auth.isAdmin(uid);
     final userDoc = await _auth.getUserDoc(uid);
     final userData = userDoc.data() as Map<String, dynamic>? ?? {};
 
     return {
-      'isAdmin': isAdmin,
-      'tipoUsuario': userData['tipoUsuario'] ?? 'Cliente',
+      'isAdmin': userData['tipoUsuario'] == 'admin',
+      'tipoUsuario': userData['tipoUsuario'] ?? 'cliente',
       'estado': userData['estado'] ?? '',
     };
   }

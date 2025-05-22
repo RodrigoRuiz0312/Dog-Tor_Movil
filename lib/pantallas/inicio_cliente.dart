@@ -8,7 +8,7 @@ import 'package:particles_flutter/particles_engine.dart';
 import '../widgets/custom_appbar.dart';
 import 'ops_mascotas.dart';
 import 'perfil_cliente.dart';
-import '../widgets/huellaParticle.dart';
+import 'panel_citas.dart';
 
 //import 'listar_veterinarios.dart'; // Asumo que crearás este archivo
 //import 'gestion_citas.dart'; // Asumo que crearás este archivo
@@ -178,15 +178,19 @@ class _InicioClienteState extends State<InicioCliente>
                 alignment: Alignment.center,
                 children: [
                   // Partículas flotantes de fondo
-                  Positioned(
-                    top: 100,
-                    left: 20,
-                    right: 20,
-                    child: HuellitasParticles(
-                      cantidad: 30,
-                      ancho: MediaQuery.of(context).size.width - 40,
-                      alto: 200,
-                    ),
+                  Particles(
+                    awayRadius: 60,
+                    particles: _createParticles(),
+                    height: 100, // Altura del Card
+                    width:
+                        MediaQuery.of(context).size.width -
+                        40, // Ancho del Card
+                    onTapAnimation: true,
+                    awayAnimationDuration: const Duration(milliseconds: 50),
+                    awayAnimationCurve: Curves.linear,
+                    enableHover: true,
+                    hoverRadius: 10,
+                    connectDots: false,
                   ),
 
                   Container(
@@ -241,15 +245,18 @@ class _InicioClienteState extends State<InicioCliente>
                           OperacionesMascota(user: widget.user),
                         ),
                   ),
-                  /*
                   _buildOptionCard(
                     context,
                     icon: Icons.calendar_today,
                     title: 'Citas',
-                    onTap: () => _navigateToScreen(
-                      GestionCitasScreen(user: widget.user), // Asume que existe
-                    ),
+                    onTap:
+                        () => _navigateToScreen(
+                          PanelCitas(
+                            user: widget.user,
+                          ), // Asume que existe
+                        ),
                   ),
+                  /*
                   _buildOptionCard(
                     context,
                     icon: Icons.medical_services,

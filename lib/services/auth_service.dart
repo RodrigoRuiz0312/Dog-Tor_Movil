@@ -70,19 +70,14 @@ class AuthService {
       print("Login con email exitoso. UID: ${result.user!.uid}");
 
       // Verificar si es admin
-      final isAdminDoc =
-          await _firestore
-              .collection('admin_roles')
-              .doc(result.user!.uid)
-              .get();
-      print("¿Es admin?: ${isAdminDoc.exists}");
-
       // Obtener datos del usuario
       final userDoc =
           await _firestore.collection('users').doc(result.user!.uid).get();
-      print("Tipo de usuario: ${userDoc['tipoUsuario']}");
+      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+      print("Tipo de usuario: ${userData['tipoUsuario']}");
 
-      if (isAdminDoc.exists) {
+      // Si es admin, permitir acceso directamente
+      if (userData['tipoUsuario'] == 'admin') {
         print("Usuario es administrador. Acceso permitido.");
         return result.user;
       }
@@ -197,12 +192,6 @@ class AuthService {
       print("Error al obtener el correo del usuario: $e");
       return null;
     }
-  }
-
-  // En AuthService
-  Future<bool> isAdmin(String uid) async {
-    final doc = await _firestore.collection('admin_roles').doc(uid).get();
-    return doc.exists; // True si el UID existe en la colección admin_roles
   }
 
   Future<DocumentSnapshot> getUserDoc(String uid) async {
