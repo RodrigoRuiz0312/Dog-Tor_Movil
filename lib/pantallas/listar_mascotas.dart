@@ -89,6 +89,31 @@ class _ListaMascotasScreenState extends State<ListaMascotasScreen> {
     );
   }
 
+  Future<void> _eliminarMascota(String mascotaId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('mascotas')
+          .doc(mascotaId)
+          .delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mascota eliminada correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar la mascota: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -161,25 +186,63 @@ class _ListaMascotasScreenState extends State<ListaMascotasScreen> {
               final edad = mascota['edad'];
               final imagenUrl = mascota['imagenUrl'];
 
-              return Card(
-                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  leading:
-                      imagenUrl != null
-                          ? CircleAvatar(
-                            backgroundImage: CachedNetworkImageProvider(
-                              imagenUrl,
+              return Dismissible(
+                key: Key(mascota.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: EdgeInsets.only(right: 20),
+                  child: Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (direction) async {
+                  return await showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: Text('Confirmar eliminación'),
+                          content: Text(
+                            '¿Estas seguro de que quieres eliminar a $nombre?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text('Cancelar'),
                             ),
-                            radius: 25,
-                          )
-                          : CircleAvatar(child: Icon(Icons.pets), radius: 25),
-                  title: Text(
-                    nombre,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text(
+                                'Eliminar',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                  );
+                },
+                onDismissed: (direction) {
+                  _eliminarMascota(mascota.id);
+                },
+                child: Card(
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: ListTile(
+                    leading:
+                        imagenUrl != null
+                            ? CircleAvatar(
+                              backgroundImage: CachedNetworkImageProvider(
+                                imagenUrl,
+                              ),
+                              radius: 25,
+                            )
+                            : CircleAvatar(child: Icon(Icons.pets), radius: 25),
+                    title: Text(
+                      nombre,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text('$especie - $edad años'),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () => _mostrarDetallesMascota(context, mascota),
                   ),
-                  subtitle: Text('$especie - $edad años'),
-                  trailing: Icon(Icons.chevron_right),
-                  onTap: () => _mostrarDetallesMascota(context, mascota),
                 ),
               );
             },

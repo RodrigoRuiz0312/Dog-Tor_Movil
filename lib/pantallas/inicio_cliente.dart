@@ -9,6 +9,7 @@ import '../widgets/custom_appbar.dart';
 import 'ops_mascotas.dart';
 import 'perfil_cliente.dart';
 import 'panel_citas.dart';
+import 'listar_veterinarios.dart';
 
 //import 'listar_veterinarios.dart'; // Asumo que crearás este archivo
 //import 'gestion_citas.dart'; // Asumo que crearás este archivo
@@ -251,9 +252,16 @@ class _InicioClienteState extends State<InicioCliente>
                     title: 'Citas',
                     onTap:
                         () => _navigateToScreen(
-                          PanelCitas(
-                            user: widget.user,
-                          ), // Asume que existe
+                          PanelCitas(user: widget.user), // Asume que existe
+                        ),
+                  ),
+                  _buildOptionCard(
+                    context,
+                    icon: Icons.medical_information,
+                    title: 'Veterinarios',
+                    onTap:
+                        () => _navigateToScreen(
+                          ListaVeterinariosScreen(user: widget.user),
                         ),
                   ),
                   /*

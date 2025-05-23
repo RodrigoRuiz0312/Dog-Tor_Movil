@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import '../widgets/appbar_diseño.dart';
 
 class RegistrarMascotaScreen extends StatefulWidget {
   final User user;
@@ -94,7 +95,10 @@ class _RegistrarMascotaScreenState extends State<RegistrarMascotaScreen> {
             'edad': int.tryParse(edadController.text) ?? 0,
             'imagenUrl': _imageUrl,
             'fechaRegistro': FieldValue.serverTimestamp(),
-            'senas': senasController.text,
+            'senas':
+                senasController.text.isEmpty
+                    ? 'No especificadas'
+                    : senasController.text,
           });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -150,7 +154,7 @@ class _RegistrarMascotaScreenState extends State<RegistrarMascotaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Registrar Mascota"), centerTitle: true),
+      appBar: buildCustomAppBar(context, 'Registrar Mascota'),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
         child: Form(
