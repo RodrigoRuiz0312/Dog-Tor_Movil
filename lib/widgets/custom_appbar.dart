@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:lottie/lottie.dart';
-import '../pantallas/perfil_cliente.dart';
+import '../pantallas/clientes/perfil_cliente.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final User user;

@@ -5,25 +5,22 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'dart:math';
 import 'package:particles_flutter/component/particle/particle.dart';
 import 'package:particles_flutter/particles_engine.dart';
-import '../widgets/custom_appbar.dart';
-import 'ops_mascotas.dart';
-import 'perfil_cliente.dart';
-import 'panel_citas.dart';
-import 'listar_veterinarios.dart';
+import 'package:login/widgets/custom_appbar.dart';
+import '../veterinaria/registro_veterinaria.dart';
+import 'ops_vets.dart';
+import 'perfil_veterinario.dart';
+import 'citas_programadas.dart';
 
-//import 'listar_veterinarios.dart'; // Asumo que crearás este archivo
-//import 'gestion_citas.dart'; // Asumo que crearás este archivo
-
-class InicioCliente extends StatefulWidget {
+class InicioVeterinario extends StatefulWidget {
   final User user;
 
-  const InicioCliente({super.key, required this.user});
+  const InicioVeterinario({super.key, required this.user});
 
   @override
-  State<InicioCliente> createState() => _InicioClienteState();
+  State<InicioVeterinario> createState() => _InicioVeterinarioState();
 }
 
-class _InicioClienteState extends State<InicioCliente>
+class _InicioVeterinarioState extends State<InicioVeterinario>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -35,7 +32,6 @@ class _InicioClienteState extends State<InicioCliente>
   int _selectedIndex = -1;
   bool _isHovered = false;
 
-  // Cambia esto:
   List<bool> _hoverStates = [false, false]; // Para Perfil y Cerrar sesión
   List<AnimationController> _hoverControllers = [];
 
@@ -48,8 +44,8 @@ class _InicioClienteState extends State<InicioCliente>
     )..repeat(reverse: true);
 
     _animation = Tween<double>(
-      begin: 1.1,
-      end: 1.3,
+      begin: 0.9,
+      end: 1.1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _drawerAnimationController = AnimationController(
@@ -104,11 +100,11 @@ class _InicioClienteState extends State<InicioCliente>
 
       if (userDoc.exists && mounted) {
         setState(() {
-          _nombreCompleto = userDoc['nombre'] ?? userDoc['nombre'];
+          _nombreCompleto = userDoc['nombre'] ?? 'Veterinario';
         });
       }
     } catch (e) {
-      debugPrint("Error al cargar datos del usuario: $e");
+      debugPrint("Error al cargar datos del veterinario: $e");
     }
   }
 
@@ -178,14 +174,11 @@ class _InicioClienteState extends State<InicioCliente>
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Partículas flotantes de fondo
                   Particles(
                     awayRadius: 60,
                     particles: _createParticles(),
-                    height: 100, // Altura del Card
-                    width:
-                        MediaQuery.of(context).size.width -
-                        40, // Ancho del Card
+                    height: 100,
+                    width: MediaQuery.of(context).size.width - 40,
                     onTapAnimation: true,
                     awayAnimationDuration: const Duration(milliseconds: 50),
                     awayAnimationCurve: Curves.linear,
@@ -203,7 +196,7 @@ class _InicioClienteState extends State<InicioCliente>
                           scale: _animation.value,
                           child: Text(
                             _nombreCompleto != null
-                                ? '¡Bienvenido, $_nombreCompleto!'
+                                ? '¡Bienvenido, Dr. $_nombreCompleto!'
                                 : '¡Bienvenido!',
                             style: Theme.of(
                               context,
@@ -229,7 +222,7 @@ class _InicioClienteState extends State<InicioCliente>
             ),
 
             const SizedBox(height: 30),
-            // Opciones en columna
+
             Expanded(
               child: GridView.count(
                 crossAxisCount: 1,
@@ -239,40 +232,29 @@ class _InicioClienteState extends State<InicioCliente>
                 children: [
                   _buildOptionCard(
                     context,
-                    icon: Icons.pets,
-                    title: 'Mascotas',
-                    onTap:
-                        () => _navigateToScreen(
-                          OperacionesMascota(user: widget.user),
-                        ),
-                  ),
-                  _buildOptionCard(
-                    context,
-                    icon: Icons.calendar_today,
-                    title: 'Citas',
-                    onTap:
-                        () => _navigateToScreen(
-                          PanelCitas(user: widget.user), // Asume que existe
-                        ),
-                  ),
-                  _buildOptionCard(
-                    context,
-                    icon: Icons.medical_information,
-                    title: 'Veterinarios',
-                    onTap:
-                        () => _navigateToScreen(
-                          ListaVeterinariosScreen(user: widget.user),
-                        ),
-                  ),
-                  /*
-                  _buildOptionCard(
-                    context,
                     icon: Icons.medical_services,
-                    title: 'Veterinarios',
-                    onTap: () => _navigateToScreen(
-                      ListaVeterinariosScreen(user: widget.user), // Asume que existe
-                    ),
-                  ),*/
+                    title: 'Veterinaria',
+                    onTap:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => OperacionesVeterinaria(user: widget.user),
+                          ),
+                        ),
+                  ),
+                  _buildOptionCard(
+                    context,
+                    icon: Icons.event_available,
+                    title: 'Citas programadas',
+                    onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => CitasProgramadasScreen(user: widget.user),
+                          ),
+                        ),
+                  ),
                 ],
               ),
             ),
@@ -326,7 +308,7 @@ class _InicioClienteState extends State<InicioCliente>
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 25,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     shadows: [
@@ -432,7 +414,7 @@ class _InicioClienteState extends State<InicioCliente>
                                   context,
                                   MaterialPageRoute(
                                     builder:
-                                        (context) => PerfilClienteScreen(
+                                        (context) => PerfilVeterinarioScreen(
                                           user: widget.user,
                                         ),
                                   ),

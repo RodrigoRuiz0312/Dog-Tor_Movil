@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
-import '../widgets/appbar_diseño.dart';
+import 'package:login/widgets/appbar_diseño.dart';
 
 class RegistrarMascotaScreen extends StatefulWidget {
   final User user;
@@ -153,61 +153,86 @@ class _RegistrarMascotaScreenState extends State<RegistrarMascotaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: buildCustomAppBar(context, 'Registrar Mascota'),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Sección de imagen
+              // Sección de imagen con mejor diseño
               GestureDetector(
                 onTap: _showImagePickerDialog,
                 child: Container(
-                  height: 150,
+                  height: 180,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade100, width: 2),
                   ),
-                  child:
-                      _selectedImage != null
-                          ? ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              _selectedImage!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
-                          )
-                          : Column(
+                  child: Stack(
+                    children: [
+                      if (_selectedImage != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(
+                            _selectedImage!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        ),
+                      if (_selectedImage == null)
+                        Center(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 Icons.add_a_photo,
                                 size: 50,
-                                color: Colors.grey,
+                                color: Colors.grey.shade400,
                               ),
-                              SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               Text(
-                                'Agregar foto',
-                                style: TextStyle(color: Colors.grey),
+                                'Agregar foto de la mascota',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 16,
+                                ),
                               ),
                             ],
                           ),
+                        ),
+                      if (_isUploading)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // Campo de nombre
-              TextFormField(
+              // Campo de nombre con mejor diseño
+              _buildFormField(
                 controller: nombreController,
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  prefixIcon: Icon(Icons.pets),
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Nombre',
+                icon: Icons.pets,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor ingresa el nombre';
@@ -215,16 +240,13 @@ class _RegistrarMascotaScreenState extends State<RegistrarMascotaScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 16),
 
               // Campo de especie
-              TextFormField(
+              _buildFormField(
                 controller: especieController,
-                decoration: InputDecoration(
-                  labelText: 'Especie',
-                  prefixIcon: Icon(Icons.category),
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Especie',
+                icon: Icons.category,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor ingresa la especie';
@@ -232,27 +254,21 @@ class _RegistrarMascotaScreenState extends State<RegistrarMascotaScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 16),
 
               // Campo de raza
-              TextFormField(
+              _buildFormField(
                 controller: razaController,
-                decoration: InputDecoration(
-                  labelText: 'Raza',
-                  prefixIcon: Icon(Icons.emoji_nature),
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Raza',
+                icon: Icons.emoji_nature,
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 16),
 
               // Campo de edad
-              TextFormField(
+              _buildFormField(
                 controller: edadController,
-                decoration: InputDecoration(
-                  labelText: 'Edad',
-                  prefixIcon: Icon(Icons.cake),
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Edad',
+                icon: Icons.cake,
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -264,41 +280,91 @@ class _RegistrarMascotaScreenState extends State<RegistrarMascotaScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 16),
 
-              // Campo de edad
-              TextFormField(
+              // Campo de señas particulares
+              _buildFormField(
                 controller: senasController,
-                decoration: InputDecoration(
-                  labelText: 'Señas particulares',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Señas particulares',
+                icon: Icons.description,
+                maxLines: 3,
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-              // Botón de registro
-              ElevatedButton(
-                onPressed:
-                    _isSubmitting || _isUploading ? null : registrarMascota,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              // Botón de registro mejorado
+              SizedBox(
+                height: 50,
+                child: ElevatedButton(
+                  onPressed:
+                      _isSubmitting || _isUploading ? null : registrarMascota,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
+                  child:
+                      _isSubmitting || _isUploading
+                          ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text(
+                            'REGISTRAR MASCOTA',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                 ),
-                child:
-                    _isSubmitting || _isUploading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                          'REGISTRAR MASCOTA',
-                          style: TextStyle(fontSize: 16),
-                        ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFormField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Colors.blue),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.blue, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+      ),
+      keyboardType: keyboardType,
+      validator: validator,
+      maxLines: maxLines,
     );
   }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../widgets/appbar_diseño.dart';
+import 'package:login/widgets/appbar_diseño.dart';
 
 class ListaMascotasScreen extends StatefulWidget {
   final User user;
@@ -223,25 +223,35 @@ class _ListaMascotasScreenState extends State<ListaMascotasScreen> {
                 onDismissed: (direction) {
                   _eliminarMascota(mascota.id);
                 },
-                child: Card(
-                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  child: ListTile(
-                    leading:
-                        imagenUrl != null
-                            ? CircleAvatar(
-                              backgroundImage: CachedNetworkImageProvider(
-                                imagenUrl,
+                child: SizedBox(
+                  child: Card(
+                    elevation: 7,
+                    shadowColor: Colors.greenAccent,
+                    margin: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    child: ListTile(
+                      leading:
+                          imagenUrl != null
+                              ? CircleAvatar(
+                                backgroundImage: CachedNetworkImageProvider(
+                                  imagenUrl,
+                                ),
+                                radius: 30,
+                              )
+                              : CircleAvatar(
+                                child: Icon(Icons.pets),
+                                radius: 30,
                               ),
-                              radius: 25,
-                            )
-                            : CircleAvatar(child: Icon(Icons.pets), radius: 25),
-                    title: Text(
-                      nombre,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      title: Text(
+                        nombre,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      subtitle: Text('$especie - $edad años'),
+                      trailing: Icon(Icons.chevron_right),
+                      onTap: () => _mostrarDetallesMascota(context, mascota),
                     ),
-                    subtitle: Text('$especie - $edad años'),
-                    trailing: Icon(Icons.chevron_right),
-                    onTap: () => _mostrarDetallesMascota(context, mascota),
                   ),
                 ),
               );

@@ -4,34 +4,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../widgets/appbar_diseño.dart';
+import 'package:login/widgets/appbar_diseño.dart';
 
-class RegistrarVeterinariaScreen extends StatefulWidget {
+class EditarVeterinariaScreen extends StatefulWidget {
   final User user;
 
-  const RegistrarVeterinariaScreen({super.key, required this.user});
+  const EditarVeterinariaScreen({super.key, required this.user});
 
   @override
-  State<RegistrarVeterinariaScreen> createState() =>
-      _RegistrarVeterinariaScreenState();
+  State<EditarVeterinariaScreen> createState() =>
+      _EditarVeterinariaScreenState();
 }
 
-class _RegistrarVeterinariaScreenState
-    extends State<RegistrarVeterinariaScreen> {
+class _EditarVeterinariaScreenState extends State<EditarVeterinariaScreen> {
   final _formKey = GlobalKey<FormState>();
+  late DocumentReference _veterinariaRef;
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _direccionController = TextEditingController();
   final TextEditingController _telefonoController = TextEditingController();
-  final Map<String, TextEditingController> _horariosControllers = {
-    'lunes': TextEditingController(text: '9:00-18:00'),
-    'martes': TextEditingController(text: '9:00-18:00'),
-    'miércoles': TextEditingController(text: '9:00-18:00'),
-    'jueves': TextEditingController(text: '9:00-18:00'),
-    'viernes': TextEditingController(text: '9:00-18:00'),
-    'sábado': TextEditingController(text: '9:00-14:00'),
-    'domingo': TextEditingController(text: 'Cerrado'),
-  };
-  final List<String> _serviciosSeleccionados = ['Consulta'];
+  final Map<String, TextEditingController> _horariosControllers = {};
+  final List<String> _serviciosSeleccionados = [];
   final List<String> _opcionesServicios = [
     'Consulta',
     'Vacunación',
@@ -43,7 +35,55 @@ class _RegistrarVeterinariaScreenState
   ];
 
   File? _imagen;
+  String? _imagenUrlActual;
+  bool _cargando = true;
   bool _subiendo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosVeterinaria();
+  }
+
+  Future<void> _cargarDatosVeterinaria() async {
+    try {
+      // Obtener referencia a la veterinaria del usuario
+      final query =
+          await FirebaseFirestore.instance
+              .collection('veterinarias')
+              .where('veterinarioId', isEqualTo: widget.user.uid)
+              .limit(1)
+              .get();
+
+      if (query.docs.isEmpty) {
+        Navigator.pop(context);
+        return;
+      }
+
+      _veterinariaRef = query.docs.first.reference;
+      final data = query.docs.first.data();
+
+      // Cargar datos en los controllers
+      _nombreController.text = data['nombre'];
+      _direccionController.text = data['direccion'];
+      _telefonoController.text = data['telefono'];
+      _serviciosSeleccionados.addAll(List<String>.from(data['servicios']));
+      _imagenUrlActual = data['imagenUrl'];
+
+      // Inicializar controllers de horarios
+      final horarios = data['horarios'] as Map<String, dynamic>;
+      horarios.forEach((dia, valor) {
+        _horariosControllers[dia] = TextEditingController(text: valor);
+      });
+
+      setState(() => _cargando = false);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar datos: $e')));
+      Navigator.pop(context);
+    }
+  }
 
   Future<void> _seleccionarImagen() async {
     final picker = ImagePicker();
@@ -57,7 +97,7 @@ class _RegistrarVeterinariaScreenState
   }
 
   Future<String?> _subirImagen() async {
-    if (_imagen == null) return null;
+    if (_imagen == null) return _imagenUrlActual;
 
     try {
       final ref = FirebaseStorage.instance
@@ -70,17 +110,17 @@ class _RegistrarVeterinariaScreenState
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
       print('Error al subir imagen: $e');
-      return null;
+      return _imagenUrlActual;
     }
   }
 
-  Future<void> _registrarVeterinaria() async {
+  Future<void> _actualizarVeterinaria() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _subiendo = true);
 
     try {
-      // Subir imagen primero si existe
+      // Subir imagen si hay una nueva
       final imagenUrl = await _subirImagen();
 
       // Preparar datos de horarios
@@ -89,36 +129,24 @@ class _RegistrarVeterinariaScreenState
         horarios[dia] = controller.text;
       });
 
-      // Crear documento de veterinaria
-      final nuevaVeterinaria = {
+      // Actualizar documento
+      await _veterinariaRef.update({
         'nombre': _nombreController.text,
         'direccion': _direccionController.text,
         'telefono': _telefonoController.text,
         'servicios': _serviciosSeleccionados,
         'horarios': horarios,
         'imagenUrl': imagenUrl,
-        'veterinarioId': widget.user.uid,
-        'fechaRegistro': FieldValue.serverTimestamp(),
-      };
-
-      await FirebaseFirestore.instance
-          .collection('veterinarias')
-          .add(nuevaVeterinaria);
-
-      // Actualizar usuario para marcar que ya tiene veterinaria
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.user.uid)
-          .update({'tieneVeterinaria': true});
+        'ultimaActualizacion': FieldValue.serverTimestamp(),
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Veterinaria registrada exitosamente!')),
+        SnackBar(content: Text('Datos actualizados exitosamente!')),
       );
-      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error al registrar: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
     } finally {
       setState(() => _subiendo = false);
     }
@@ -126,8 +154,15 @@ class _RegistrarVeterinariaScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (_cargando) {
+      return Scaffold(
+        appBar: buildCustomAppBar(context, 'Editar veterinaria'),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      appBar: buildCustomAppBar(context, 'Registrar mi veterinaria'),
+      appBar: buildCustomAppBar(context, 'Editar veterinaria'),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Form(
@@ -143,9 +178,13 @@ class _RegistrarVeterinariaScreenState
                     radius: 60,
                     backgroundColor: Colors.grey[200],
                     backgroundImage:
-                        _imagen != null ? FileImage(_imagen!) : null,
+                        _imagen != null
+                            ? FileImage(_imagen!)
+                            : (_imagenUrlActual != null
+                                ? NetworkImage(_imagenUrlActual!)
+                                : null),
                     child:
-                        _imagen == null
+                        _imagen == null && _imagenUrlActual == null
                             ? Icon(
                               Icons.add_a_photo,
                               size: 40,
@@ -244,21 +283,22 @@ class _RegistrarVeterinariaScreenState
               }),
               SizedBox(height: 24),
 
-              // Botón de registro
+              // Botón de actualización
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _subiendo ? null : _registrarVeterinaria,
+                  onPressed: _subiendo ? null : _actualizarVeterinaria,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                  ),
                   child:
                       _subiendo
                           ? CircularProgressIndicator(color: Colors.white)
                           : Text(
-                            'Registrar Veterinaria',
-                            style: TextStyle(fontSize: 16),
+                            'Guardar Cambios',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
                           ),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                  ),
                 ),
               ),
             ],

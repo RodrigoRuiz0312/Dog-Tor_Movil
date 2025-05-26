@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'registro_veterinaria.dart';
-import '../widgets/appbar_diseño.dart';
+import '../veterinaria/registro_veterinaria.dart';
+import 'package:login/widgets/appbar_diseño.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'editar_veterinaria.dart';
+import '../veterinaria/editar_veterinaria.dart';
 
 class OperacionesVeterinaria extends StatelessWidget {
   final User user;

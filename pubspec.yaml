@@ -25,6 +25,7 @@ dependencies:
   particles_flutter: ^1.0.1
   shared_preferences: ^2.5.3
   rxdart: ^0.28.0
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

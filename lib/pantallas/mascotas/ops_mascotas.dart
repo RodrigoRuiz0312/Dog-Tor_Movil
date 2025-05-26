@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'registro_mascota.dart';
 import 'listar_mascotas.dart';
-import '../widgets/appbar_diseño.dart';
+import 'package:login/widgets/appbar_diseño.dart';
 
 class OperacionesMascota extends StatelessWidget {
   final User user;
